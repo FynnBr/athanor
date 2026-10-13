@@ -232,7 +232,11 @@ def card_image(
     return out
 
 
-def spread_image(pngs: list[str], scheme, per_row: int, gap: int = 8) -> bytes:
+def spread_image(
+    pngs: list[str], scheme, per_row: int, gap: int = 8, *, fmt: str = "sixel"
+) -> bytes:
+    if fmt not in ("sixel", "png"):
+        raise ValueError("spread format must be sixel or png")
     args = [
         _magick(),
         "montage",
@@ -243,5 +247,5 @@ def spread_image(pngs: list[str], scheme, per_row: int, gap: int = 8) -> bytes:
         "-geometry",
         f"+{gap}+{gap}",
     ]
-    args += ["-background", scheme.roles["bg"], "sixel:-"]
+    args += ["-background", scheme.roles["bg"], f"{fmt}:-"]
     return subprocess.run(args, capture_output=True, check=True).stdout

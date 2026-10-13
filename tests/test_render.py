@@ -235,3 +235,23 @@ def test_the_spread_names_a_font_so_a_bitmap_face_cant_be_picked(tmp_path, monke
     (tmp_path / "PxPlus_IBM_VGA_8x16.ttf").touch()
     wall.spread_image(["a.png"], palette.load("umber"), 1)
     assert ran[0][2:4] == ["-font", str(tmp_path / "PxPlus_IBM_VGA_8x16.ttf")]
+
+
+@pytest.mark.parametrize("fmt", ["sixel", "png"])
+def test_spread_output_format(monkeypatch, fmt):
+    from athanor import wall
+
+    ran = []
+    monkeypatch.setattr(wall, "_magick", lambda: "magick")
+    monkeypatch.setattr(wall, "_font", lambda: [])
+    monkeypatch.setattr(
+        wall.subprocess,
+        "run",
+        lambda args, **kw: ran.append(args) or SimpleNamespace(stdout=b"art"),
+    )
+    scheme = palette.load("umber")
+    assert wall.spread_image(["a.png", "b.png", "c.png"], scheme, 2, fmt=fmt) == b"art"
+    assert ran == [[
+        "magick", "montage", "a.png", "b.png", "c.png",
+        "-tile", "2x", "-geometry", "+8+8", "-background", scheme.roles["bg"], f"{fmt}:-",
+    ]]

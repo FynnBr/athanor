@@ -156,10 +156,17 @@ def cmd_stages(args) -> None:
             transmute.apply(scheme, message=stages.announcement(scheme))
 
 
-def _sixel_ok() -> bool:
+def _graphics_protocol() -> str | None:
     if os.environ.get("ATHANOR_SIXEL") in ("0", "1"):
-        return os.environ["ATHANOR_SIXEL"] == "1"
-    return sys.stdout.isatty() and os.environ.get("TERM", "").startswith("foot")
+        return "sixel" if os.environ["ATHANOR_SIXEL"] == "1" else None
+    if not sys.stdout.isatty():
+        return None
+    term = os.environ.get("TERM", "")
+    if term.startswith("foot"):
+        return "sixel"
+    if term == "xterm-kitty" or os.environ.get("KITTY_WINDOW_ID"):
+        return "kitty"
+    return None
 
 
 def _art_dir() -> Path:
@@ -175,7 +182,7 @@ def _caption(draw: tarot.Draw, position: str, color: bool) -> None:
     print("  " + draw.meaning)
 
 
-def _show_art(draws: list[tarot.Draw]) -> None:
+def _show_art(draws: list[tarot.Draw], protocol: str) -> None:
     cards = [(tarot.art_path(d.card, _art_dir()), d.reversed) for d in draws]
     cards = [(src, rev) for src, rev in cards if src.exists()]
     if not cards:
@@ -192,23 +199,35 @@ def _show_art(draws: list[tarot.Draw]) -> None:
                 )
                 for i, (src, rev) in enumerate(cards)
             ]
-            sixel = wall.spread_image(pngs, scheme, min(fit, len(pngs)))
+            image = wall.spread_image(
+                pngs, scheme, min(fit, len(pngs)), fmt="png" if protocol == "kitty" else "sixel"
+            )
         sys.stdout.flush()
-        sys.stdout.buffer.write(sixel)
-        sys.stdout.write("\n")
+        if protocol == "kitty":
+            kitten = shutil.which("kitten")
+            command = [kitten, "icat"] if kitten else ["kitty", "+kitten", "icat"]
+            subprocess.run(
+                [*command, "--stdin=yes", "--transfer-mode=stream"],
+                input=image,
+                stderr=subprocess.DEVNULL,
+                check=True,
+            )
+        else:
+            sys.stdout.buffer.write(image)
+            sys.stdout.write("\n")
     except (wall.MissingTool, OSError, subprocess.CalledProcessError):
         pass
 
 
-def _show(draw: tarot.Draw, position: str, art: bool, color: bool) -> None:
+def _show(draw: tarot.Draw, position: str, protocol: str | None, color: bool) -> None:
     _caption(draw, position, color)
-    if art:
-        _show_art([draw])
+    if protocol:
+        _show_art([draw], protocol)
 
 
 def cmd_draw(args) -> None:
     color = ansi.enabled()
-    art = not args.no_art and _sixel_ok()
+    protocol = None if args.no_art else _graphics_protocol()
     if args.day or args.png:
         seed, _ = sigil.host_digest()
         today = _now().date()
@@ -218,7 +237,7 @@ def cmd_draw(args) -> None:
             if out:
                 print(out)
             return
-        _show(draw, "", art, color)
+        _show(draw, "", protocol, color)
         return
     if args.card:
         draws = [tarot.draw_by_name(name) for name in args.card]
@@ -232,8 +251,8 @@ def cmd_draw(args) -> None:
     positions = tarot.SPREAD_POSITIONS.get(n) or tuple(str(i + 1) for i in range(n))
     for position, draw in zip(positions, draws, strict=True):
         _caption(draw, position, color)
-    if art:
-        _show_art(draws)
+    if protocol:
+        _show_art(draws, protocol)
 
 
 def cmd_cards(args) -> None:
