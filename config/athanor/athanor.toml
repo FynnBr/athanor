@@ -23,6 +23,9 @@ description = "Dust hangs in the lamplight. A terminal hums on the desk."
 pixel_scale = 0
 # A plate for each workspace. false keeps level 1's on all of them.
 levels = true
+# foot or kitty. Used by Super+Return and terminal apps in the launcher.
+# Applies at the next transmute.
+terminal = "foot"
 # tandy, terminus, cozette, compaq or vga. Applies at the next transmute.
 terminal_font = "tandy"
 

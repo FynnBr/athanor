@@ -2,6 +2,7 @@ import contextlib
 import getpass
 import json
 import os
+import shlex
 import shutil
 import signal
 import socket
@@ -187,9 +188,12 @@ def tokens(
     fingerprint: str,
     font: str = config.Config.terminal_font,
     name: str = "",
+    terminal: str = config.Config.terminal,
 ) -> dict[str, str]:
     w, h = size
     face = config.TERMINAL_FONTS[font]
+    terminal_config = "kitty/kitty.conf" if terminal == "kitty" else "foot/foot.ini"
+    terminal_command = f"{terminal} --config {shlex.quote(str(current_dir() / terminal_config))}"
     layout = lock_layout(size, walls.lock_panel_x if walls else 0, walls.scale if walls else 2)
     return {
         **scheme.colors(),
@@ -212,6 +216,14 @@ def tokens(
         "bin": str(Path.home() / ".local/bin/athanor"),
         "card_png": str(cache_dir() / "tarot-day.png"),
         "term_font": face.family,
+        "terminal_command": terminal_command,
+        "terminal_command_lua": json.dumps(terminal_command, ensure_ascii=False),
+        # Kitty uses points rather than pixels (12pt = 16px at 96 DPI).
+        "kitty_font_pt": f"{face.px * 72 / 96:g}",
+        "kitty_font_bold": face.bold or "auto",
+        # Kitty cannot load the bitmap Ttyp0 italic used by foot.
+        "kitty_font_italic": face.family,
+        "kitty_font_bold_italic": face.bold or "auto",
         "term_px": str(face.px),
         "term_icon_px": str(round(face.px * 3 / 4)),
         "term_font_bold": f"{face.bold}:pixelsize={face.px}"
@@ -248,7 +260,9 @@ def apply(
         layout = {**lock_layout(size, walls.lock_panel_x, walls.scale), "scale": walls.scale}
         write_atomic(_layout_state(), json.dumps(layout))
         card_of_day_png(scheme, layout)
-    toks = tokens(scheme, size, walls, sigil_png, fingerprint, cfg.terminal_font, cfg.name)
+    toks = tokens(
+        scheme, size, walls, sigil_png, fingerprint, cfg.terminal_font, cfg.name, cfg.terminal
+    )
     render_tree(current_dir(), toks)
     write_atomic(state_dir() / "scheme", scheme.name + "\n")
     cursor.render(scheme)

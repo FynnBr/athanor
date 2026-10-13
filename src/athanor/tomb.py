@@ -54,7 +54,7 @@ def stone(name: str, sig: int, year: int, dlvl: int | None = None) -> str:
 # These all die at logout (hypridle aborts every time), so their crashes from
 # the previous session are ignored.
 SESSION_PROGRAMS = frozenset(
-    {"hypridle", "hyprlock", "hyprpaper", "waybar", "mako", "swaybg", "fuzzel", "foot"}
+    {"hypridle", "hyprlock", "hyprpaper", "waybar", "mako", "swaybg", "fuzzel", "foot", "kitty"}
 )
 
 

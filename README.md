@@ -92,6 +92,22 @@ Athanor keeps its files in `~/.config/athanor`. Outside that folder it only
 adds a marked block to the top of your `.zshrc` and your `hyprland.lua`. Your
 own settings load after the block and override it.
 
+Foot and Kitty get matching terminal themes. Foot is the default. To use Kitty
+for Super+Return and terminal apps in the launcher, set `terminal = "kitty"`
+under `[display]` in `~/.config/athanor/athanor.toml`, then run `athanor transmute`.
+The desktop installer installs both terminals without changing their own configs.
+To style Kitty launched elsewhere, add this before your own settings in
+`~/.config/kitty/kitty.conf` (adjust the path if you use `XDG_CONFIG_HOME`):
+
+```conf
+include ~/.config/athanor/current/kitty/kitty.conf
+```
+
+Both themes follow `terminal_font` and all four schemes; open terminals recolor
+on transmutation. Kitty uses point sizes (12pt matches Foot's 16px at 96 DPI),
+and uses the regular outline face for italics because it cannot load Foot's
+bitmap Ttyp0 face. Reload Kitty's config with Ctrl+Shift+F5 after changing fonts.
+
 The prompt names each terminal window after its folder, or after the command
 running in it. Set `ATHANOR_TITLE=0` in your `.zshrc` to keep your own titles.
 

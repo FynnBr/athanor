@@ -37,6 +37,7 @@ class Config:
     pixel_scale: int = 0
     levels: bool = True
     terminal_font: str = "tandy"
+    terminal: str = "foot"
     tarot_on_login: bool = True
     stages: bool = False
 
@@ -55,6 +56,9 @@ def load() -> Config:
     font = str(display.get("terminal_font", Config.terminal_font)).lower()
     if font not in TERMINAL_FONTS:
         font = Config.terminal_font
+    terminal = str(display.get("terminal", Config.terminal)).lower()
+    if terminal not in ("foot", "kitty"):
+        terminal = Config.terminal
     return Config(
         place=(float(lat), float(lon)) if lat is not None and lon is not None else None,
         name=str(character.get("name", "")),
@@ -66,6 +70,7 @@ def load() -> Config:
         pixel_scale=int(display.get("pixel_scale", 0)),
         levels=bool(display.get("levels", True)),
         terminal_font=font,
+        terminal=terminal,
         tarot_on_login=bool(raw.get("tarot", {}).get("on_login", True)),
         stages=bool(raw.get("transmute", {}).get("stages", False)),
     )

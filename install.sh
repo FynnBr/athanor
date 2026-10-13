@@ -7,7 +7,7 @@
 # Layers:
 #   shell    the command, fonts, zsh prompt and the Helix, micro and nvim themes
 #   desktop  Hyprland, Waybar, mako, fuzzel, hyprlock, hypridle, hyprpaper,
-#            foot and the coredump watcher (implies shell)
+#            foot, kitty and the coredump watcher (implies shell)
 #   notch    a Hyprland plugin that sets window titles into the border and
 #            draws a double rule round the focused window. Not installed
 #            unless asked for. Rebuild it after every Hyprland upgrade.
@@ -42,7 +42,7 @@ markers() {
 
 shell_packages=(zsh uv imagemagick curl unzip fontconfig perl)
 desktop_packages=(
-  hyprland hyprlock hypridle waybar mako fuzzel foot ttf-nerd-fonts-symbols-mono hyprpaper swaybg
+  hyprland hyprlock hypridle waybar mako fuzzel foot kitty ttf-nerd-fonts-symbols-mono hyprpaper swaybg
   libnotify grim slurp wl-clipboard brightnessctl playerctl
 )
 notch_packages=(gcc make pkgconf)
@@ -343,7 +343,7 @@ install_shell() {
   run fc-cache -f
   local face
   face=$("$athanor" font 2>/dev/null || true)
-  say "For a terminal other than Athanor's foot, set its font to ${face:-Terminus (TTF) at 16px}."
+  say "For a terminal other than Athanor's foot or kitty, set its font to ${face:-Terminus (TTF) at 16px}."
   if [[ $(basename "${SHELL:-}") != zsh ]]; then
     say "Your login shell is ${SHELL:-unknown}. The prompt needs zsh: chsh -s /usr/bin/zsh"
   fi
