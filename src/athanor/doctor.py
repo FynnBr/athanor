@@ -344,7 +344,8 @@ def check_place() -> list[Result]:
 
 def check_rendered() -> list[Result]:
     scheme = saved_scheme()
-    needed = ["foot/foot.ini", "hypr/hyprlock.conf", "hypr/levels.lua", "mako/config"]
+    terminal = "kitty/kitty.conf" if config.load().terminal == "kitty" else "foot/foot.ini"
+    needed = [terminal, "hypr/hyprlock.conf", "hypr/levels.lua", "mako/config"]
     missing = [n for n in needed if not (current_dir() / n).exists()]
     if missing:
         return [

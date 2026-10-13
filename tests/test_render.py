@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from athanor import palette, render, transmute
+from athanor import config, palette, render, transmute
 
 
 def test_variants():
@@ -37,12 +37,75 @@ def test_every_template_renders(tmp_path, name):
         "fuzzel/fuzzel.ini",
         "foot/colors.ini",
         "foot/foot.ini",
+        "kitty/colors.conf",
+        "kitty/kitty.conf",
+        "hypr/terminal.conf",
+        "hypr/terminal.lua",
         "hypr/colors.lua",
     }
     for path in written:
         text = path.read_text()
         assert "{{" not in text and "}}" not in text, path
     assert f"background={scheme.roles['bg'][1:]}" in (tmp_path / "out/foot/colors.ini").read_text()
+
+
+@pytest.mark.parametrize("name", palette.SCHEMES)
+def test_kitty_colors_match_foot(tmp_path, name):
+    scheme = palette.load(name)
+    toks = transmute.tokens(scheme, (1920, 1080), None, tmp_path / "s.png", "x")
+    render.render_tree(tmp_path / "out", toks)
+    text = (tmp_path / "out/kitty/colors.conf").read_text()
+    settings = dict(
+        line.split(maxsplit=1) for line in text.splitlines() if not line.startswith("#")
+    )
+    assert settings["foreground"] == scheme.roles["fg"]
+    assert settings["background"] == scheme.roles["bg"]
+    assert settings["selection_foreground"] == settings["cursor_text_color"] == scheme.roles["bg"]
+    assert settings["selection_background"] == settings["cursor"] == scheme.roles["fg"]
+    assert [settings[f"color{i}"] for i in range(16)] == list(scheme.ansi)
+
+
+@pytest.mark.parametrize("font", config.TERMINAL_FONTS)
+def test_terminal_font_reaches_kitty(tmp_path, font):
+    face = config.TERMINAL_FONTS[font]
+    toks = transmute.tokens(
+        palette.load("umber"), (1920, 1080), None, tmp_path / "s.png", "x", font
+    )
+    render.render_tree(tmp_path / "out", toks)
+    text = (tmp_path / "out/kitty/kitty.conf").read_text()
+    assert f"font_family {face.family}\n" in text
+    assert f"font_size {face.px * 72 / 96:g}\n" in text
+    assert f"bold_font {face.bold or 'auto'}\n" in text
+    assert f"italic_font {face.family}\n" in text
+    assert f"bold_italic_font {face.bold or 'auto'}\n" in text
+    assert "include colors.conf\n" in text
+    assert "window_padding_width 14\n" in text
+    assert "cursor_shape block\n" in text
+    assert "mouse_hide_wait -1\n" in text
+    assert "shell_integration no-title no-cursor\n" in text
+
+
+@pytest.mark.parametrize("terminal", ["foot", "kitty"])
+def test_terminal_selection_reaches_bindings_and_launcher(tmp_path, monkeypatch, terminal):
+    import json
+    import shlex
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config with spaces"))
+    toks = transmute.tokens(
+        palette.load("umber"), (1920, 1080), None, tmp_path / "s.png", "x", terminal=terminal
+    )
+    render.render_tree(tmp_path / "out", toks)
+    filename = "kitty.conf" if terminal == "kitty" else "foot.ini"
+    command = toks["terminal_command"]
+    assert shlex.split(command) == [
+        terminal,
+        "--config",
+        str(tmp_path / "config with spaces/athanor/current" / terminal / filename),
+    ]
+    assert f"$terminal = {command}\n" in (tmp_path / "out/hypr/terminal.conf").read_text()
+    lua = (tmp_path / "out/hypr/terminal.lua").read_text().splitlines()[-1]
+    assert json.loads(lua.removeprefix("return ")) == command
+    assert f"terminal={command} -e\n" in (tmp_path / "out/fuzzel/fuzzel.ini").read_text()
 
 
 def test_terminal_font_reaches_foot(tmp_path):

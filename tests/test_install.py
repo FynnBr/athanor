@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 INSTALL = ROOT / "install.sh"
 EVERYTHING = (
     "zsh uv imagemagick curl unzip fontconfig hyprland hyprlock hypridle waybar mako fuzzel"
-    " perl foot swaybg libnotify grim slurp wl-clipboard"
+    " perl foot kitty swaybg libnotify grim slurp wl-clipboard"
 )
 
 STUBS = {
@@ -160,6 +160,15 @@ def test_a_fresh_desktop_gets_a_lua_config_with_bindings(home):
     assert 'require(athanor .. "binds")' in lua
     assert not (home / ".config/hypr/hyprland.conf").exists()
     assert "systemctl --user enable --now athanor-tomb.path" in home.log.read_text()
+
+
+def test_desktop_installs_kitty_without_changing_its_config(home):
+    kitty = home.write(".config/kitty/kitty.conf", "font_size 14\n")
+    home.run("desktop", installed=EVERYTHING.replace(" kitty", ""))
+    assert "sudo pacman -S --needed kitty" in home.log.read_text()
+    assert (home / ".config/kitty/kitty.conf").read_bytes() == kitty
+    home.run("--uninstall")
+    assert (home / ".config/kitty/kitty.conf").read_bytes() == kitty
 
 
 def test_athanors_own_hyprland_conf_moves_to_lua_and_stays(home):

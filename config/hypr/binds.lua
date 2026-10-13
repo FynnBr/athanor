@@ -3,7 +3,7 @@ local home = ((xdg and xdg ~= "") and xdg or (os.getenv("HOME") .. "/.config")) 
 local bin = os.getenv("HOME") .. "/.local/bin/athanor"
 local mod = "SUPER"
 
-local terminal = "foot --config " .. home .. "/current/foot/foot.ini"
+local terminal = dofile(home .. "/current/hypr/terminal.lua")
 local launcher = "fuzzel --config " .. home .. "/current/fuzzel/fuzzel.ini"
 
 hl.bind(mod .. " + Return", hl.dsp.exec_cmd(terminal))

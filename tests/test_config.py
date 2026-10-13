@@ -1,3 +1,5 @@
+import pytest
+
 from athanor import config
 
 
@@ -20,6 +22,19 @@ def test_terminal_font_is_read(tmp_path, monkeypatch):
 def test_unknown_terminal_font_falls_back(tmp_path, monkeypatch):
     cfg = _load(tmp_path, monkeypatch, '[display]\nterminal_font = "comic sans"\n')
     assert cfg.terminal_font == "tandy"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("kitty", "kitty"), ("KITTY", "kitty"), ("foot", "foot"), ("unknown", "foot")],
+)
+def test_terminal_selection(tmp_path, monkeypatch, value, expected):
+    cfg = _load(tmp_path, monkeypatch, f'[display]\nterminal = "{value}"\n')
+    assert cfg.terminal == expected
+
+
+def test_terminal_defaults_to_foot(tmp_path, monkeypatch):
+    assert _load(tmp_path, monkeypatch, "").terminal == "foot"
 
 
 def test_the_character_defaults_to_who_and_where_you_are(tmp_path, monkeypatch):
