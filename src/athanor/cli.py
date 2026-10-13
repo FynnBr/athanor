@@ -209,7 +209,10 @@ def _show_art(draws: list[tarot.Draw], protocol: str) -> None:
             # Anchor the image to text cells so icat writes every occupied row,
             # including rows that scroll, and leaves the prompt below the spread.
             subprocess.run(
-                [*command, "--stdin=yes", "--transfer-mode=stream", "--unicode-placeholder"],
+                [
+                    *command, "--stdin=yes", "--transfer-mode=stream",
+                    "--unicode-placeholder", "--align=left",
+                ],
                 input=image,
                 stderr=subprocess.DEVNULL,
                 check=True,

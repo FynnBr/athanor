@@ -94,7 +94,7 @@ def test_draw_renders_cards(rendering, monkeypatch, capsys, term, args):
         command, kwargs = rendering[-1]
         assert command == [
             "/usr/bin/kitten", "icat", "--stdin=yes", "--transfer-mode=stream",
-            "--unicode-placeholder",
+            "--unicode-placeholder", "--align=left",
         ]
         assert kwargs["input"] == b"PNG"
         assert kwargs["check"] is True
@@ -167,6 +167,8 @@ def test_kitty_reserves_all_image_rows(terminal, tmp_path, monkeypatch, n, cell_
     rows = [line for line in output[0].split("\n") if "\U0010eeee" in line]
     assert len(rows) == math.ceil(height / cell_height)
     assert all(line.count("\U0010eeee") == math.ceil(width / 8) for line in rows)
+    # icat's default centering inserts spaces before each placeholder row.
+    assert all(" " not in line.split("\U0010eeee", 1)[0] for line in rows)
     assert output[0].endswith("\n")  # The cursor is below the last placeholder row.
 
 
