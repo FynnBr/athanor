@@ -79,7 +79,7 @@ def test_terminal_font_reaches_kitty(tmp_path, font):
     assert f"italic_font {face.family}\n" in text
     assert f"bold_italic_font {face.bold or 'auto'}\n" in text
     assert "include colors.conf\n" in text
-    assert "window_padding_width 14px\n" in text
+    assert "window_padding_width 14\n" in text
     assert "cursor_shape block\n" in text
     assert "mouse_hide_wait -1\n" in text
     assert "shell_integration no-title no-cursor\n" in text
